@@ -42,7 +42,7 @@ namespace Microservices
             // se descarca fisierele xlsl
             Console.WriteLine("Downloading files... (This may take a minute or two)");
             for (int i = 0; i < fileURL.Count; i++)
-                webClient.DownloadFile(fileURL[i], "C:\\Users\\Silviu\\source\\repos\\ngo_services\\list" + (i+1).ToString() + ".xlsl");
+                webClient.DownloadFile(fileURL[i], "C:\\Users\\Silviu\\source\\repos\\ngo_services\\list" + (i+1).ToString() + ".xlsx");
 
             Console.WriteLine("\n\nDownload Complete!");
         }
