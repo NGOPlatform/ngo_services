@@ -41,7 +41,7 @@ namespace Microservices
                         arr.Add(ds.Tables[0].Rows[row_no][i].ToString());
                 }
                 row_no++;
-                csvContent += string.Join(",", arr) + "\n";
+                csvContent += string.Join("ඞ", arr) + "\n";
 
                 Console.WriteLine("Parsing row " + row_no.ToString());
             }
