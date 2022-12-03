@@ -28,11 +28,12 @@ namespace Microservices
                 }
             });
 
+            StreamWriter csv = new(destinationCsvFilePath, false);
             var csvContent = string.Empty;
             int row_no = 0;
             while (row_no < ds.Tables[0].Rows.Count)
             {
-                var arr = new List<string>();
+                var arr = new List<string?>();
                 for (int i = 0; i < ds.Tables[0].Columns.Count; i++)
                 {
                     if (ds.Tables[0].Rows[row_no][i] == null)
@@ -42,12 +43,12 @@ namespace Microservices
                 }
                 row_no++;
                 csvContent += string.Join("ඞ", arr) + "\n";
+                csv.Write(csvContent);
+                csvContent = string.Empty;
 
                 Console.WriteLine("Parsing row " + row_no.ToString());
             }
 
-            StreamWriter csv = new(destinationCsvFilePath, false);
-            csv.Write(csvContent);
             csv.Close();
         }
     }
