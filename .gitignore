@@ -350,5 +350,8 @@ MigrationBackup/
 .ionide/
 
 # CSV and XLSX files
-.csv
-.xlsx
+*.csv
+*.xlsx
+
+# temp.txt
+temp.txt
