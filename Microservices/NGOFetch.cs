@@ -8,7 +8,7 @@ namespace Microservices
         static readonly HttpClient client = new();
         static readonly WebClient webClient = new();
 
-        static async Task Main()
+        public static async Task DownloadData()
         {
             string responseText = "";
 
@@ -38,11 +38,16 @@ namespace Microservices
 
             // se elimina lista dovezilor, deoarece nu este un fisier relevant
             fileURL.RemoveAt(fileURL.Count - 1);
+            // se eleimina lista ong-urilor din tari straine
+            fileURL.RemoveAt(fileURL.Count - 1);
 
             // se descarca fisierele xlsl
-            Console.WriteLine("Downloading files... (This may take a minute or two)");
+            Console.WriteLine("Downloading files... (This may take a minute or two, depending on internet connection)");
             for (int i = 0; i < fileURL.Count; i++)
-                webClient.DownloadFile(fileURL[i], "C:\\Users\\Silviu\\source\\repos\\ngo_services\\list" + (i+1).ToString() + ".xlsx");
+            {
+                webClient.DownloadFile(fileURL[i], "C:\\Users\\Silviu\\source\\repos\\ngo_services\\list" + (i + 1).ToString() + ".xlsx");
+                Console.WriteLine("Downloaded file " + (i + 1) + ".");
+            }
 
             Console.WriteLine("\n\nDownload Complete!");
         }
