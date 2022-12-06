@@ -28,9 +28,6 @@ namespace Microservices
 
         public static void AddCSVToDatabase(string csvFilePath)
         {
-            //int[] max = new int[6]; for (int i = 0; i < max.Length; i++) max[i] = -1;
-            //int[] min = new int[6]; for (int i = 0; i < min.Length; i++) min[i] = 9999999;
-
             // verificare conexiune baza date
             if (con == null)
                 throw new Exception("Not connected to database!");
@@ -74,8 +71,65 @@ namespace Microservices
                                       (!dict.ContainsKey("Modificari ale scopului 4") || dict["Modificari ale scopului 4"] == "" ? "" : "\n" + dict["Modificari ale scopului 4"]) +
                                       (!dict.ContainsKey("Modificari ale scopului 5") || dict["Modificari ale scopului 5"] == "" ? "" : "\n" + dict["Modificari ale scopului 5"]);
                     
+                    dt.Rows.Add(dr);
+                }
+            }
+            
+            using OracleBulkCopy bulkCopy = new(con, OracleBulkCopyOptions.UseInternalTransaction);
+            bulkCopy.DestinationTableName = "ONG";
+            bulkCopy.BulkCopyTimeout = 600;
+            bulkCopy.WriteToServer(dt);
+        }
+
+        public static void DebugShowMaxMin(string csvPath)
+        {
+            int[] max = new int[6]; for (int i = 0; i < max.Length; i++) max[i] = -1;
+            int[] min = new int[6]; for (int i = 0; i < min.Length; i++) min[i] = 9999999;
+
+            // verificare conexiune baza date
+            if (con == null)
+                throw new Exception("Not connected to database!");
+
+            // preluare date din fisier
+            using StreamReader file = new(csvPath);
+
+            char separator = 'ඞ';
+            Dictionary<string, string> dict = new();
+
+            List<string> coloana = file.ReadLine().Split(separator).ToList();
+            coloana.RemoveAt(coloana.Count - 1); // ultimul este "", deci este in plus si se va sterge
+
+            List<string> date = file.ReadToEnd().Split(separator).ToList();
+
+            DataTable dt = new();
+            dt.Columns.Add("DENUMIRE");
+            dt.Columns.Add("NR_INREG");
+            dt.Columns.Add("JUDET");
+            dt.Columns.Add("LOCALITATE");
+            dt.Columns.Add("ADRESA");
+            dt.Columns.Add("DESCRIERE");
+
+            for (int contor = 0; contor < date.Count; contor++)
+            {
+                date[contor] = date[contor].Trim();
+                dict[coloana[contor % coloana.Count]] = date[contor];
+
+                if ((contor + 1) % coloana.Count == 0)
+                {
+                    DataRow dr = dt.NewRow();
+                    dr["DENUMIRE"] = dict["Denumire"];
+                    dr["NR_INREG"] = dict["Numar inreg Reg National"];
+                    dr["JUDET"] = dict["Judet"];
+                    dr["LOCALITATE"] = dict["Localitate"];
+                    dr["ADRESA"] = dict["Adresa"];
+                    dr["DESCRIERE"] = dict["Scopul initial"] +
+                                      (dict["Modificari ale scopului 1"] == "" ? "" : "\n" + dict["Modificari ale scopului 1"]) +
+                                      (dict["Modificari ale scopului 2"] == "" ? "" : "\n" + dict["Modificari ale scopului 2"]) +
+                                      (dict["Modificari ale scopului 3"] == "" ? "" : "\n" + dict["Modificari ale scopului 3"]) +
+                                      (!dict.ContainsKey("Modificari ale scopului 4") || dict["Modificari ale scopului 4"] == "" ? "" : "\n" + dict["Modificari ale scopului 4"]) +
+                                      (!dict.ContainsKey("Modificari ale scopului 5") || dict["Modificari ale scopului 5"] == "" ? "" : "\n" + dict["Modificari ale scopului 5"]);
+
                     // COD TESTARE CORECTITUDINE SI MARIMI ALE DATELOR
-                    /*
                     if (dr["DENUMIRE"] == "") min[0] = -1;
                     else
                     {
@@ -112,19 +166,12 @@ namespace Microservices
                         if (dr["DESCRIERE"].ToString().Length < min[5]) min[5] = dr["DESCRIERE"].ToString().Length;
                         if (dr["DESCRIERE"].ToString().Length > max[5]) max[5] = dr["DESCRIERE"].ToString().Length;
                     }
-                    */
-                    dt.Rows.Add(dr);
                 }
             }
-            /*
+            
             Console.WriteLine("Rows: " + dt.Rows.Count);
             for(int i = 0; i < min.Length; i++)
                 Console.WriteLine("For Column " + i + "; Min: " + min[i].ToString() + "; Max: " + max[i].ToString());
-            */
-            using OracleBulkCopy bulkCopy = new(con, OracleBulkCopyOptions.UseInternalTransaction);
-            bulkCopy.DestinationTableName = "ONG";
-            bulkCopy.BulkCopyTimeout = 600;
-            bulkCopy.WriteToServer(dt);
         }
 
         public static void DeleteAllDataFrom(string table)

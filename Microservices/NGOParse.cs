@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Microservices
 {
-    internal class NGOParse
+    internal static class NGOParse
     {
         // Parser din XLSX in CSV 
         public static void SaveAsCsv(string excelFilePath, string destinationCsvFilePath)

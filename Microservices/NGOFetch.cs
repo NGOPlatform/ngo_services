@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Microservices
 {
-    internal class NGOFetch
+    internal static class NGOFetch
     {
         static readonly HttpClient client = new();
         static readonly WebClient webClient = new();
