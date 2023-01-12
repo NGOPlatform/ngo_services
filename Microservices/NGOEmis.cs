@@ -9,7 +9,7 @@ namespace Microservices
 
         public static void Initialize()
         {
-            using StreamReader sr = new(@"C:\Users\Silviu\source\repos\ngo_services\" + "credentials.txt");
+            using StreamReader sr = new(Program.FULL_PATH + @"\credentials.txt");
             emailSMTP = new()
             {
                 //UseDefaultCredentials = false,

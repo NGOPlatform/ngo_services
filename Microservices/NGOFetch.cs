@@ -45,7 +45,7 @@ namespace Microservices
             Console.WriteLine("Downloading files... (This may take a minute or two, depending on internet connection)");
             for (int i = 0; i < fileURL.Count; i++)
             {
-                webClient.DownloadFile(fileURL[i], "C:\\Users\\Silviu\\source\\repos\\ngo_services\\list" + (i + 1).ToString() + ".xlsx");
+                webClient.DownloadFile(fileURL[i], Program.FULL_PATH + @"\list" + (i + 1).ToString() + ".xlsx");
                 Console.WriteLine("Downloaded file " + (i + 1) + ".");
             }
 
