@@ -7,6 +7,7 @@ namespace Microservices
     internal static class NGOSeed
     {
         static SqlConnection connection;
+        static List<string> existingIDs= new List<string>();
 
         public static void Connect()
         {
@@ -38,6 +39,18 @@ namespace Microservices
         
         public static void AddCSVToDatabase(string csvFilePath)
         {
+            existingIDs.Clear();
+            string sql = @"SELECT NR_INREG FROM ONG";
+
+            using (SqlCommand command = new SqlCommand(sql, connection))
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    existingIDs.Add(reader.GetString(0));
+                }
+            }
+
             // verificare conexiune baza date
             if (connection == null)
                 throw new Exception("Not connected to database!");
@@ -60,6 +73,7 @@ namespace Microservices
             dt.Columns.Add("LOCALITATE"); 
             dt.Columns.Add("ADRESA");
             dt.Columns.Add("DESCRIERE");
+            DataRow dr = dt.NewRow();
 
             for (int contor = 0; contor < date.Count; contor++)
             {
@@ -84,7 +98,7 @@ namespace Microservices
 
                 if ((contor + 1) % coloana.Count == 0)
                 {
-                    DataRow dr = dt.NewRow();
+                    dr = dt.NewRow();
                     dr["DENUMIRE"]  = dict["Denumire"];
                     dr["NR_INREG"]  = dict["Numar inreg Reg National"];
                     dr["JUDET"]     = dict["Judet"];
@@ -109,18 +123,12 @@ namespace Microservices
                         (string)dr["LOCALITATE"] != string.Empty) && 
                         (string)dr["ADRESA"] != string.Empty)
                     {
-                        string sql = @"SELECT NR_INREG FROM ONG";
-
-                        SqlCommand command = new SqlCommand(sql, connection);
-                        SqlDataReader reader = command.ExecuteReader();
                         bool gasit = false;
-                        while (reader.Read())
+                        foreach (string id in existingIDs)
                         {
-                            if (dr["NR_INREG"].ToString().Equals(reader.GetValue(0).ToString()))
+                            if (dr["NR_INREG"].ToString().Equals(id))
                                 gasit = true;
                         }
-                        command.Dispose();
-                        reader.Close();
 
                         if (gasit)
                         {
@@ -147,12 +155,60 @@ namespace Microservices
 
                             using SqlCommand command3 = new SqlCommand(sql, connection);
                             command3.ExecuteNonQuery();
+
+                            existingIDs.Add((string)dr["NR_INREG"]);
                         }
                     }
                 }
             }
         }
     
+        public static void CheckMatches()
+        {
+            string sql1 = @"SELECT ID, DESCRIERE FROM ONGNOU;";
+            string sql2 = @"SELECT * FROM USERS;";
+
+            Dictionary<string, string> ong = new Dictionary<string, string>();
+
+            using SqlCommand sqlCommand = new SqlCommand(sql1, connection);
+            using SqlDataReader reader = sqlCommand.ExecuteReader();
+            while (reader.Read())
+                ong[(string)reader.GetValue(0)] = (string)reader.GetValue(1);
+
+            using SqlCommand sqlCommand2 = new SqlCommand(sql2, connection);
+            using SqlDataReader reader2 = sqlCommand2.ExecuteReader();
+            while (reader.Read())
+            {
+                string[] subs = ((string)reader2.GetValue(5)).Split(';');
+                foreach (string key in ong.Keys) 
+                {
+                    foreach (string sub in subs) 
+                    {
+                        if (sub != "" && ong[key].ToLower().Contains(sub.ToLower()))
+                        {
+                            // update se adauga notificare
+                            string sqlUpdate = @"UPDATE USERS 
+                                                 SET NOTIFICATIONS = '" + reader2.GetValue(7) + key + ";' " +
+                                                "WHERE ID = " + reader2.GetValue(0) + ";";
+
+                            SqlCommand sqlCommandUpdate = new SqlCommand(sqlUpdate, connection);
+                            sqlCommandUpdate.BeginExecuteNonQuery();
+                            sqlCommandUpdate.Dispose();
+
+                            // se trimite mail
+                            NGOEmis.SendMail((string)reader2.GetValue(3), "Buna ziua. A fost gasit un nou ONG pentru subscriptia [" + sub + "]." +
+                                                                          "\nVa rugam sa verificati platforma pentru mai multe detalii.");
+                        }
+                    }
+                }
+            }
+
+            string sql = @"DELETE FROM ONGNOU;";
+
+            using SqlCommand command = new SqlCommand(sql, connection);
+            command.ExecuteNonQuery();
+        }
+
         public static void ResetTables()
         {
             string sql = @"
